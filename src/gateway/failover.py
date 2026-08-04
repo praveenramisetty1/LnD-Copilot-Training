@@ -8,7 +8,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from src.providers.base import BaseProvider, ProviderResponse
 from src.providers.registry import get_failover_chain

@@ -1,12 +1,11 @@
 # src/providers/anthropic_simulator.py
 """Simulates Anthropic provider — Claude-3-Opus, Claude-3-Sonnet, Claude-3-Haiku."""
 
-import time
 import random
-from typing import List, Dict
+import time
+from typing import Dict, List
 
 from .base import BaseProvider, ProviderConfig, ProviderResponse
-
 
 ANTHROPIC_MODELS = {
     "claude-3-opus": {

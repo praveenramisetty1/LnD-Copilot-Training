@@ -4,18 +4,19 @@ LLM Gateway POC — FastAPI Application Factory.
 Registers routes, middleware, and startup/shutdown lifecycle.
 """
 
-from dotenv import load_dotenv
-load_dotenv()  # Load .env before any os.getenv() calls
-
 from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+load_dotenv()  # Load .env before any os.getenv() calls
+
 from src.api.middleware.auth import AuthMiddleware
 from src.api.middleware.rate_limit import RateLimitMiddleware
-from src.api.routes import route as route_module
-from src.api.routes import health as health_module
 from src.api.routes import analytics as analytics_module
+from src.api.routes import health as health_module
+from src.api.routes import route as route_module
 from src.gateway.router import GatewayRouter
 
 

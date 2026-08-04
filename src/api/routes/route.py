@@ -5,6 +5,7 @@ Accepts messages + NFR parameters, returns routed LLM response.
 """
 
 from fastapi import APIRouter, HTTPException, Request
+
 from src.api.models.requests import RouteRequest
 from src.api.models.responses import RouteResponse
 from src.gateway.nfr_parser import parse_nfr

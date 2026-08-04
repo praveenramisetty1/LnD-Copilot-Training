@@ -1,8 +1,9 @@
 # src/api/models/responses.py
 """Pydantic response models for the LLM Gateway POC."""
 
-from pydantic import BaseModel
 from typing import Any, Dict, Optional
+
+from pydantic import BaseModel
 
 
 class UsageStats(BaseModel):

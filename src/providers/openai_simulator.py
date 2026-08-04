@@ -1,12 +1,11 @@
 # src/providers/openai_simulator.py
 """Simulates OpenAI provider — GPT-4, GPT-4-Turbo, GPT-3.5-Turbo."""
 
-import time
 import random
-from typing import List, Dict
+import time
+from typing import Dict, List
 
 from .base import BaseProvider, ProviderConfig, ProviderResponse
-
 
 OPENAI_MODELS = {
     "gpt-4": {

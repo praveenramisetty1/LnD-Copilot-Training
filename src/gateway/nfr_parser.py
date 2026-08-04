@@ -6,6 +6,7 @@ No external dependencies — pure Python validation.
 
 from dataclasses import dataclass
 from typing import Optional
+
 from fastapi import HTTPException
 
 VALID_LATENCY  = {"low", "medium", "high"}
