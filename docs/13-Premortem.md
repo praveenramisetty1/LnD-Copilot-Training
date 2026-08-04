@@ -91,10 +91,16 @@
 
 ### G02-D: No Database Migration Tool
 **Root Cause:** SQL schema is defined in `06-HLD.md` but no Alembic or migration scripts exist.
-**Judge Impact:** `docker-compose up` will fail — database tables don't exist.
-**Fix:**
+
+> ⚠️ **GAP-IMPL-02 Resolution — N/A for POC (ADR-010):**
+> POC uses `data/analytics.json` as the analytics store — no SQL database is deployed in Path A (POC/Demo).
+> Alembic migrations are a **production concern only (Path B)**. `docker-compose up` in Path B will require Alembic to be set up before go-live.
+> **POC Judge Impact: None** — demo does not use PostgreSQL or TimescaleDB.
+
+**Fix (Production Path B only):**
 - Add `alembic/` directory with initial migration for all 5 core tables
 - Add `alembic upgrade head` to Docker entrypoint
+- POC (Path A): No action required — JSON file store requires no migrations (ADR-010)
 
 ### G02-E: No requirements.txt, docker-compose.yml, or Dockerfile
 **Root Cause:** Root config files referenced throughout docs but never created.

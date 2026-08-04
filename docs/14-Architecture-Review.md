@@ -12,7 +12,7 @@
 | Intelligent Routing & Failover | ✅ Strong | NFR scoring algorithm documented, 4-level failover with circuit breaker |
 | Semantic Caching | ✅ Strong | Two-tier cache (Redis L1 + Qdrant L2), cosine similarity, configurable threshold |
 | Performance & Scalability | ✅ Strong | Async FastAPI, stateless gateway, horizontal scaling path defined |
-| Rate Limiting & Queue | ✅ Strong | Token bucket via Redis, priority queue (sorted set), DLQ |
+| Rate Limiting & Queue | ✅ Strong | Token bucket (in-memory POC / Redis production — ADR-002), priority queue, DLQ (production) |
 | Analytics & Conversational UI | ⚠️ Adequate | Dashboard spec defined; NLU depends on OpenAI integration quality |
 | Security | ✅ Strong | Auth, RBAC, TLS, secrets management, input validation all addressed |
 
@@ -89,9 +89,11 @@
 
 ### Strengths
 - Token bucket algorithm is well-understood, prevents burst without long-term unfairness
-- Priority queue uses Redis Sorted Set — O(log N) insert/pop, suitable for high throughput
+- **POC:** In-memory token bucket — zero infrastructure dependency, verified in all 8 demo scenarios (ADR-002)
+- **Production target:** Redis INCR + TTL for distributed rate limiting across gateway replicas
+- Priority queue design uses Redis Sorted Set — O(log N) insert/pop, suitable for high throughput
 - Enterprise tier (priority 20) vs. Free tier (priority 1) — 20x priority differential is clearly differentiated
-- Dead Letter Queue captures permanently failed requests with retry metadata
+- Dead Letter Queue (production): Redis List captures permanently failed requests with retry metadata
 
 ### Concerns & Resolutions
 
@@ -109,16 +111,17 @@
 ## 6. Analytics & Conversational Interface Review
 
 ### Strengths
-- TimescaleDB hypertable for requests enables fast time-range aggregations
+- **POC:** `data/analytics.json` append-only store — zero infrastructure, verified in all 8 demo scenarios (ADR-010)
+- **Production target:** TimescaleDB hypertable enables fast time-range aggregations
 - Pre-defined metrics (cost, latency, cache hit rate, provider distribution) cover all judged dimensions
-- Conversational interface uses intent classification + SQL generation — deterministic and auditable
+- Conversational interface (NLU) is designed but deferred to future scope (ADR-007); analytics accessible via REST API in POC
 
 ### Concerns & Resolutions
 
 | Concern | Resolution |
 |---------|-----------|
 | NLU accuracy for edge-case queries | Confidence threshold + clarifying question fallback |
-| Dashboard load time with large datasets | Materialized views + time-bucket aggregation in TimescaleDB |
+| Dashboard load time with large datasets | POC: JSON file is small; Production: materialized views + time-bucket in TimescaleDB (ADR-010) |
 | Analytics real-time vs. batch? | Async write-through on every request; dashboard polls every 5s |
 
 ### Score Self-Assessment: **4.0 / 5.0**
@@ -155,7 +158,8 @@
 | ADR-002 | Qdrant for vector DB (open-source, Docker) | ✅ Accepted |
 | ADR-003 | Redis dual-purpose (L1 cache + queue) | ✅ Accepted |
 | ADR-004 | OpenAI-compatible API surface | ✅ Accepted |
-| ADR-005 | TimescaleDB over InfluxDB | ✅ Accepted |
+| ADR-005 | TimescaleDB over InfluxDB *(Production target)* | ✅ Accepted |
+| ADR-010 | JSON file store for analytics in POC (no DB dependency) | ✅ Accepted |
 | ADR-006 | Cosine similarity threshold = **0.75** (reduced from 0.95 after demo testing — 0.95 was too strict, produced 0% hits) | ✅ Updated |
 | ADR-007 | NFR scoring weights: Cost 40%, Latency 30%, Accuracy 30% | ✅ Accepted |
 

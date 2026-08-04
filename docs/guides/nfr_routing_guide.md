@@ -52,8 +52,10 @@ The model with the highest score is selected.
 
 ## Example Usage
 
+> **POC endpoint:** `POST /api/v1/route` | **Production target:** `POST /v1/chat/completions` (ADR-004)
+
 ```http
-POST /v1/chat/completions
+POST /api/v1/route
 Authorization: Bearer {api_key}
 X-NFR-Latency: low
 X-NFR-Cost: low
@@ -77,4 +79,85 @@ Response will include the selected model and reason:
 
 ---
 
-_TODO: Add advanced routing rules, A/B testing configuration_
+---
+
+## Advanced Routing Rules
+
+The gateway supports override rules that take precedence over the scoring algorithm. Rules are evaluated in priority order (lowest number = highest priority).
+
+### Rule Structure
+
+```json
+{
+  "priority": 1,
+  "conditions": {
+    "tier": "enterprise",
+    "nfr_accuracy": "critical"
+  },
+  "target_model": "gpt-4",
+  "fallback_models": ["claude-3-opus"],
+  "enabled": true
+}
+```
+
+### Example Rules
+
+| Priority | Condition | Override Target | Use Case |
+|----------|-----------|-----------------|----------|
+| 1 | `tier=enterprise AND accuracy=critical` | `gpt-4` forced | SLA guarantee |
+| 2 | `context_window=128k` | `claude-3-sonnet` | Long-doc processing |
+| 3 | `stream=true` | `gpt-4-turbo` | Real-time UX |
+| 10 | _(default)_ | Scoring algorithm | Standard routing |
+
+### Configuring Rules (POC)
+
+In the POC, routing rules are loaded from `config/routing_rules.json` at startup:
+
+```json
+[
+  {
+    "priority": 1,
+    "conditions": { "nfr_accuracy": "critical" },
+    "target_model": "gpt-4",
+    "fallback_models": ["claude-3-opus", "gemini-ultra"],
+    "enabled": true
+  }
+]
+```
+
+Runtime rule updates are a production feature via the Admin API (`PUT /admin/routing-rules/{id}` — see `docs/architecture/config-ui-design.md`).
+
+---
+
+## A/B Testing Configuration
+
+> 📅 **Future Scope** — A/B testing is a production feature (Path B). Design is documented here for completeness.
+
+A/B testing allows traffic splitting between two model configurations to compare cost, latency, or quality outcomes.
+
+### Designed A/B Rule Structure
+
+```json
+{
+  "experiment_id": "exp-001",
+  "description": "GPT-4 vs Claude Opus for accuracy-critical requests",
+  "condition": { "nfr_accuracy": "critical" },
+  "variants": [
+    { "model": "gpt-4",       "traffic_pct": 50, "label": "control" },
+    { "model": "claude-3-opus", "traffic_pct": 50, "label": "challenger" }
+  ],
+  "metrics": ["latency_ms", "cost_usd", "user_rating"],
+  "enabled": false
+}
+```
+
+### Traffic Splitting Logic (Designed)
+
+```python
+# Deterministic split using request_id hash (avoids session inconsistency)
+variant = "control" if hash(request_id) % 100 < 50 else "challenger"
+```
+
+### POC Note
+
+A/B testing is **not active in the POC**. The scoring algorithm always selects the highest-scoring model. To implement A/B testing in production, add experiment rules to the routing rule engine and enable the traffic splitter middleware.

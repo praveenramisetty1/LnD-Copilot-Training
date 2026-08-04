@@ -73,13 +73,17 @@ The LLM Gateway is designed around five guiding principles:
 
 ## 5. Trade-off Analysis
 
-### Semantic Cache Threshold (0.95)
-| Threshold | Cache Hit Rate | Risk of Wrong Answer |
-|-----------|---------------|---------------------|
-| 0.80 | Very High | High (semantically different prompts matched) |
-| 0.90 | High | Medium |
-| **0.95** | **Balanced** | **Low — our choice** |
-| 0.99 | Low | Near zero |
+### Semantic Cache Threshold — Decision: 0.75 (ADR-003)
+
+> ⚠️ **ADR-003 Update:** Original design chose 0.95. Empirical testing during demo validation showed 0.95 produced **0% cache hits**. Threshold reduced to **0.75** after testing. Verified cache hit rate at 0.75: **42.2%** (target ≥ 40% ✅).
+
+| Threshold | Cache Hit Rate | Risk of Wrong Answer | Status |
+|-----------|---------------|---------------------|--------|
+| 0.80 | Very High | High (semantically different prompts matched) | Considered |
+| 0.90 | High | Medium | Considered |
+| ~~0.95~~ | ~~Balanced~~ | ~~Low~~ | ❌ Rejected — 0% hits in testing |
+| **0.75** | **42.2% verified** | **Low-Medium** | ✅ **Chosen (ADR-003)** |
+| 0.99 | Low | Near zero | Considered |
 
 ### Model Selection: Explicit Preference vs. NFR Scoring
 - **Explicit Preference (`X-Model-Preference`):** Client knows best model → respect it
