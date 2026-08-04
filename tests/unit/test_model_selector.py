@@ -1,9 +1,8 @@
 # tests/unit/test_model_selector.py
 """Unit tests for NFR-based model scoring and selection — TC-02"""
 
-import pytest
+from src.gateway.model_selector import rank_models, select_model
 from src.gateway.nfr_parser import parse_nfr
-from src.gateway.model_selector import select_model, rank_models
 
 ALL_PROVIDERS = ["openai", "anthropic", "google"]
 

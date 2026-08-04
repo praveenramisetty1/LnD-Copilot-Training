@@ -1,11 +1,11 @@
 # tests/unit/test_semantic_cache.py
 """Unit tests for semantic cache — TC-03"""
 
-import os
 import time
-import pytest
-from src.cache.semantic_cache import SemanticCache, _tokenize, _term_freq, _cosine_similarity
 
+import pytest
+
+from src.cache.semantic_cache import SemanticCache, _cosine_similarity, _tokenize
 
 # ── Text utility unit tests ───────────────────────────────────────────────────
 

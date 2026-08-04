@@ -3,8 +3,8 @@
 
 import pytest
 from fastapi import HTTPException
-from src.gateway.nfr_parser import parse_nfr, parse_nfr_from_headers, NFRRequirements
 
+from src.gateway.nfr_parser import parse_nfr, parse_nfr_from_headers
 
 # ── TC-01-01: All headers present ────────────────────────────────────────────
 

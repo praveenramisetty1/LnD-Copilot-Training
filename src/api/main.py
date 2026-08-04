@@ -58,7 +58,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS — permit all origins for local POC
+    # CORS — innermost layer, added first
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -66,11 +66,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Auth — must be added AFTER CORSMiddleware
-    app.add_middleware(AuthMiddleware)
-
-    # Rate limiting — must be added AFTER AuthMiddleware (needs request.state.tier)
+    # Rate limiting — middle layer; runs AFTER auth so request.state.tier is set
     app.add_middleware(RateLimitMiddleware)
+
+    # Auth — outermost layer, added last so it executes first on every request
+    app.add_middleware(AuthMiddleware)
 
     # Routers
     app.include_router(health_module.router,    tags=["health"])
