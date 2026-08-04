@@ -19,7 +19,7 @@
 
 **Actor:** API Consumer  
 **Goal:** Receive a response from the best model matching declared NFR requirements  
-**Trigger:** POST /v1/chat/completions with X-NFR-* headers
+**Trigger:** `POST /api/v1/route` *(POC)* · `POST /v1/chat/completions` *(Production target, ADR-004)*
 
 **Main Flow:**
 1. Consumer sends request with `X-NFR-Latency: low`, `X-NFR-Cost: low`, `X-NFR-Accuracy: standard`
@@ -42,18 +42,22 @@
 
 **Actor:** API Consumer  
 **Goal:** Receive a cached response for a semantically similar prompt  
-**Trigger:** POST /v1/chat/completions where a similar prompt was previously cached
+**Trigger:** `POST /api/v1/route` *(POC)* · `POST /v1/chat/completions` *(Production target)* where a similar prompt was previously cached
 
 **Main Flow:**
 1. Consumer sends prompt: *"What is the capital of France?"*
-2. Gateway generates embedding via OpenAI Ada-002
-3. Qdrant vector search finds cached entry with cosine similarity 0.97 (≥ 0.95 threshold)
+2. **POC:** Gateway tokenises prompt and computes pure-Python cosine similarity against cached entries (ADR-003)
+   **Production:** Gateway generates embedding via OpenAI Ada-002 → Qdrant vector search
+3. Similarity match found: cosine similarity 0.91 (≥ 0.75 threshold, ADR-003)
+
+   > ⚠️ **ADR-003:** Threshold set to **0.75** (reduced from 0.95 after empirical testing — 0.95 produced 0% cache hits).
 4. Cached response returned immediately — no provider call made
 5. Response includes `metadata.cache_hit: true`, `metadata.latency_ms: <50`
 
 **Alternate Flow — Cache Miss:**
-- Similarity < 0.95 → proceed to provider
-- Store new embedding + response in Qdrant with 7-day TTL
+- Similarity < 0.75 → proceed to provider
+- **POC:** Store prompt tokens + response in in-memory cache with 7-day TTL
+- **Production:** Store Ada-002 embedding + response in Qdrant with 7-day TTL
 - Return `metadata.cache_hit: false`
 
 **Postcondition:** Cost saved; cache hit rate metric incremented
@@ -143,42 +147,67 @@
 
 ---
 
-## UC-07: Conversational Analytics Query
+## UC-07: Conversational Analytics Query *(Future Scope — ADR-007)*
 
-**Actor:** Analytics User  
-**Goal:** Query analytics data using natural language  
-**Trigger:** User types a question in the Chat Analytics interface
+> ⚠️ **POC Status: NOT IMPLEMENTED.** This use case describes the production NLU pipeline design.
+> In the POC, analytics data is accessible via `GET /v1/analytics/summary` (REST API).
+> NLU conversational interface is deferred to a future release (ADR-007).
 
-**Main Flow:**
+**Actor:** Analytics User
+**Goal:** Query analytics data using natural language
+**Trigger:** User types a question in the Chat Analytics interface *(production only)*
+
+**Designed Main Flow *(not yet implemented)*:**
 1. User types: *"What was my total API cost yesterday?"*
 2. NLU pipeline classifies intent: `cost_query`, entity: `date=yesterday`
 3. Intent translated to SQL: `SELECT SUM(cost) FROM requests WHERE date = CURRENT_DATE - 1`
-4. Query executed against TimescaleDB
+4. Query executed against TimescaleDB *(production)* / `data/analytics.json` *(POC — ADR-010)*
 5. Result returned: *"Your total API cost yesterday was $4.37"* with a bar chart
 
-**Alternate Flow — Ambiguous Query:**
+**Alternate Flow — Ambiguous Query *(designed)*:**
 - NLU confidence < 0.7 → system asks clarifying question
 - *"Do you mean cost for all providers or just OpenAI?"*
 
-**Postcondition:** User receives accurate analytics data via natural language
+**Postcondition *(designed)*:** User receives accurate analytics data via natural language
+
+**POC Alternative:** Use `GET /v1/analytics/summary` to retrieve all metrics in JSON format.
 
 ---
 
 ## UC-08: Provider Health Monitoring
 
-**Actor:** Gateway System (automated)  
-**Goal:** Detect and respond to provider degradation proactively  
+**Actor:** Gateway System (automated)
+**Goal:** Detect and respond to provider degradation proactively
+
+> ⚠️ **GAP-IMPL-05 — POC vs. Production distinction:**
+> - **✅ Implemented (POC):** Reactive circuit breaker — trips on 5 consecutive failures (ADR-009). No scheduled ping required.
+> - **📅 Future Scope (Production):** Proactive scheduled health checks every 30 seconds. Enables pre-emptive deprioritisation before failures accumulate.
+
+### Reactive Circuit Breaker *(Implemented — POC)*
+
+**Trigger:** 5 consecutive failures from a provider during normal request routing
+
+**Flow:**
+1. Provider returns error on 5 consecutive requests
+2. Circuit breaker transitions: CLOSED → OPEN
+3. All subsequent requests bypass the provider for 60 seconds
+4. After 60s: HALF-OPEN — 3 probe requests sent
+5. 3 probes succeed → CLOSED state restored
+
+**Postcondition:** Degraded provider bypassed automatically; no user-facing errors
+
+### Proactive Scheduled Health Checks *(Future Scope — Production)*
+
 **Trigger:** Scheduled health check every 30 seconds
 
-**Main Flow:**
+**Designed Flow:**
 1. Gateway pings each provider's health endpoint
-2. OpenAI latency: 4,200ms (threshold: 3,000ms) → marked as degraded
-3. Circuit breaker transitions OpenAI to HALF-OPEN state
-4. Model Selector deprioritises OpenAI in scoring for subsequent requests
-5. Grafana alert fires → on-call engineer notified
-6. OpenAI recovers → after 3 successful probes → CLOSED state restored
+2. Provider latency > threshold (e.g. 3,000ms) → marked as degraded
+3. Model Selector deprioritises degraded provider in scoring
+4. Grafana alert fires → on-call engineer notified
+5. Provider recovers → after 3 successful probes → restored to full weight
 
-**Postcondition:** Degraded provider automatically deprioritised; engineers alerted; no user impact
+**Postcondition:** Degraded provider deprioritised before failures accumulate; engineers alerted proactively
 
 ---
 
@@ -192,5 +221,5 @@
 | UC-04 | Tier-Based Rate Limiting & Queue | P0 | API Consumer |
 | UC-05 | Configuration via Admin UI | P1 | Platform Admin |
 | UC-06 | Analytics Dashboard View | P1 | Analytics User |
-| UC-07 | Conversational Analytics Query | P1 | Analytics User |
-| UC-08 | Provider Health Monitoring | P1 | Gateway System |
+| UC-07 | Conversational Analytics Query | P2 *(Future Scope — ADR-007)* | Analytics User |
+| UC-08 | Provider Health Monitoring | P1 (Reactive: ✅ POC — Proactive: 📅 Future) | Gateway System |

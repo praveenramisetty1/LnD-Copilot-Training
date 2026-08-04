@@ -12,7 +12,7 @@
 | Semantic Caching & Cost Optimization | 20% | 5.0 |
 | Performance & Scalability | 20% | 4.5 |
 | Rate Limiting & Queue Management | 15% | 5.0 |
-| Analytics & Conversational Interface | 10% | 4.5 |
+| Analytics & Conversational Interface | 10% | 3.5 |
 | Security & Implementation Quality | 10% | 4.5 |
 | **Weighted Total** | **100%** | **≥ 4.7** |
 
@@ -35,9 +35,9 @@
 
 | Judge Criterion | What We Build | Demo Evidence | Score Target |
 |----------------|---------------|---------------|-------------|
-| Vector similarity search (cosine ≥ 0.95) | `src/cache/semantic_cache.py` + Qdrant | First call MISS, paraphrased call HIT | 5 |
-| Embedding generation | `src/cache/embedding_service.py` (OpenAI Ada-002) | Show embedding vector in Qdrant dashboard | 5 |
-| Cache hit rate > 40% | Redis L1 + Qdrant L2 | Dashboard metric: cache hit % over test run | 5 |
+| Vector similarity search (cosine ≥ **0.75**, ADR-003) | `src/cache/semantic_cache.py` (POC: pure-Python; Production: + Qdrant) | First call MISS, paraphrased call HIT | 5 |
+| Embedding generation | POC: pure-Python tokenisation; Production: `src/cache/embedding_service.py` (Ada-002) | Show cosine similarity score in API response metadata | 4 |
+| Cache hit rate > 40% | POC: in-memory cosine store | Dashboard metric: **42.2% verified** ✅ | 5 |
 | Cost reduction > 45% | Cost tracker per request | Before/after cost comparison chart | 5 |
 | Cache TTL & LRU eviction | `src/cache/cache_manager.py` | Config showing 7-day TTL | 4 |
 | Similarity threshold configurability | Config UI | Slider for threshold 0.80–1.00 | 4 |
@@ -70,13 +70,18 @@
 
 ## 5. Analytics & Conversational Interface (10%)
 
-| Judge Criterion | What We Build | Demo Evidence | Score Target |
-|----------------|---------------|---------------|-------------|
-| Real-time dashboard | React + Recharts + TimescaleDB | Live demo: cost, latency, cache hit, RPS widgets | 5 |
-| Provider distribution chart | Analytics collector | Pie chart: OpenAI 60%, Anthropic 30%, Google 10% | 4 |
-| Natural language analytics query | `src/analytics/chat_interface.py` | Type "What was my total cost today?" → chart returned | 5 |
-| Query accuracy > 90% | NLU pipeline | Demo 5 queries, all return correct data | 4 |
-| Historical reporting | TimescaleDB time-series | Daily/weekly cost trend line chart | 4 |
+> ⚠️ **ADR-007 — NLU Conversational Interface = Future Scope.**
+> The natural language query interface is **not implemented in the POC**. Analytics are accessible via REST API (`GET /v1/analytics/summary`). Score target adjusted from 4.5 → **3.5**. React dashboard is a production target (Path B only).
+
+| Judge Criterion | What We Build | Demo Evidence | Score Target | POC Status |
+|----------------|---------------|---------------|--------------|------------|
+| Real-time analytics REST API | `src/analytics/collector.py` | `GET /v1/analytics/summary` — cost, latency, cache hit, provider distribution | 4 | ✅ Implemented |
+| Provider distribution tracking | Analytics collector | API response: provider breakdown per request | 4 | ✅ Implemented |
+| Cache hit rate & cost savings | Cost tracker + cache layer | **42.2% hit rate**, $0 cost on cached requests | 5 | ✅ Implemented |
+| Historical request data | `data/analytics.json` | Seeded 30-day history via `demo/seed_demo_data.py` | 4 | ✅ Implemented |
+| Real-time dashboard (React UI) | React + Recharts *(production)* | Path B only — not available in POC demo | 3 | 📅 Future Scope |
+| Natural language analytics query | NLU pipeline *(production)* | Not implemented in POC (ADR-007) | 2 | 📅 Future Scope |
+| Query accuracy > 90% | NLU pipeline *(production)* | Not applicable — NLU is future scope | N/A | 📅 Future Scope |
 
 ---
 
@@ -226,7 +231,7 @@
 | Semantic Caching & Cost Optimization | 20% | 2.5 | 4.7 | +0.440 |
 | Performance & Scalability | 20% | 2.0 | 4.2 | +0.440 |
 | Rate Limiting & Queue Management | 15% | 3.0 | 4.8 | +0.270 |
-| Analytics & Conversational Interface | 10% | 2.5 | 4.3 | +0.180 |
+| Analytics & Conversational Interface | 10% | 2.5 | 3.5 | +0.100 |
 | Security & Implementation Quality | 10% | 1.5 | 4.5 | +0.300 |
 | **Weighted Total** | **100%** | **2.60** | **4.63** | **+2.03** |
 

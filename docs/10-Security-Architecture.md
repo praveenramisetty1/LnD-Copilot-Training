@@ -25,10 +25,20 @@ Invalid key → HTTP 401 Unauthorized (before routing)
 ```
 
 ### 2.2 JWT Authentication (Admin UI)
+
+> ⚠️ **GAP-IMPL-03 — POC Status: NOT IMPLEMENTED.**
+> JWT authentication is designed for the Admin UI (production Path B only).
+> **POC enforces API key authentication only** (Section 2.1) — no JWT issued or validated in the demo build.
+> JWT is a production concern tied to the React Admin UI, which is also a future scope item (GAP-IMPL-01).
+
 ```
+[Production design]
 Admin login → POST /auth/token → signed JWT (HS256, 1h expiry)
 Admin requests → validate JWT signature + expiry
 Expired JWT → HTTP 401 (refresh required)
+
+[POC]
+All requests (including admin) → API key validation only (Bearer token in Authorization header)
 ```
 
 ### 2.3 Role-Based Access Control (RBAC)
@@ -123,7 +133,8 @@ Every request is logged with:
 
 **Rules:**
 - Logs never include raw prompt content (privacy)
-- Logs stored in append-only TimescaleDB hypertable
+- **POC:** Logs stored in append-only `data/analytics.json` (ADR-010)
+- **Production:** Logs stored in append-only TimescaleDB hypertable with row-level security
 - Admin actions (rule changes, tier updates) logged separately in audit trail
 
 ---
@@ -147,7 +158,7 @@ Every request is logged with:
 | No hardcoded API keys in source | ✅ |
 | `.env` in `.gitignore` | ✅ |
 | API key stored as hash in DB | ✅ |
-| JWT with expiry | ✅ |
+| JWT with expiry | 📅 Production (Path B) — POC uses API key auth only (GAP-IMPL-03) |
 | RBAC enforced | ✅ |
 | Input validation (Pydantic) | ✅ |
 | TLS for all connections | ✅ |
@@ -168,7 +179,7 @@ Every request is logged with:
 | A04 | **Insecure Design** | Threat model reviewed in pre-mortem; defence-in-depth; fail-secure auth (reject on error) | ✅ |
 | A05 | **Security Misconfiguration** | No default passwords; CORS restricted to allowlist; no debug endpoints in prod | ✅ |
 | A06 | **Vulnerable Components** | `pip-audit` / `safety` scan in CI pipeline; `bandit` static analysis on every push | ✅ |
-| A07 | **Auth & Session Failures** | JWT expiry enforced; Bearer token required on all non-public routes; brute-force rate limit on `/auth/token` | ✅ |
+| A07 | **Auth & Session Failures** | POC: Bearer API key required on all routes; brute-force lockout (10 failures → 5min lock). Production: JWT expiry enforced + rate limit on `/auth/token` | ✅ |
 | A08 | **Software Integrity Failures** | Docker image built from pinned base; `requirements.txt` pins all versions | ✅ |
 | A09 | **Logging & Monitoring Failures** | Every request logged with user_id, model, latency, cost; Grafana alerts on error rate spike | ✅ |
 | A10 | **SSRF** | Gateway only calls pre-approved provider endpoints (registry allowlist); no user-controlled URLs | ✅ |

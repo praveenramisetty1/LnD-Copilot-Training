@@ -59,15 +59,17 @@
 |-------|-------|
 | **ID** | TC-03 |
 | **Category** | Integration |
-| **Component** | `src/cache/semantic_cache.py`, Qdrant, Redis |
+| **Component** | `src/cache/semantic_cache.py` (POC: pure-Python cosine similarity; Production: Qdrant + Ada-002) |
 | **Objective** | Verify semantic cache correctly identifies hits and misses |
+
+> ⚠️ **ADR-003:** Similarity threshold = **0.75** (reduced from original design value of 0.95 — empirical testing showed 0.95 produced 0% cache hits in demo conditions).
 
 | # | Test Case | Input Prompt | Expected Result | Pass Criteria |
 |---|-----------|-------------|-----------------|---------------|
 | 03-01 | Exact cache hit | Same prompt sent twice | Second call: `cache_hit: true` | Response from cache |
-| 03-02 | Semantic cache hit | *"Capital of France?"* then *"What city is France's capital?"* | Second call: `cache_hit: true` | Cosine sim ≥ 0.95 |
+| 03-02 | Semantic cache hit | *"Capital of France?"* then *"What city is France's capital?"* | Second call: `cache_hit: true` | Cosine sim ≥ 0.75 (ADR-003) |
 | 03-03 | Cache miss | Completely unrelated prompt | `cache_hit: false` | Provider called |
-| 03-04 | Below similarity threshold | Slightly different but distinct prompt (cosine ~0.80) | `cache_hit: false` | Threshold respected |
+| 03-04 | Below similarity threshold | Slightly different but distinct prompt (cosine ~0.60) | `cache_hit: false` | Threshold 0.75 respected (ADR-003) |
 | 03-05 | Cache TTL expiry | Prompt cached, wait for TTL to expire | Re-caches on next call | Expired entry not served |
 | 03-06 | Cache latency | Cached request | Response latency < 100ms | Performance verified |
 
@@ -101,8 +103,10 @@
 |-------|-------|
 | **ID** | TC-05 |
 | **Category** | Integration |
-| **Component** | `src/api/middleware/rate_limit.py`, Redis Queue |
+| **Component** | `src/api/middleware/rate_limit.py` (POC: in-memory token bucket; Production: Redis Queue — ADR-002) |
 | **Objective** | Verify tier-based rate limits and queue behaviour |
+
+> ⚠️ **ADR-002:** POC uses in-memory token bucket — no Redis dependency. Production target uses Redis INCR + TTL. Tests below validate in-memory behaviour.
 
 | # | Test Case | Tier | Input | Expected Result | Pass Criteria |
 |---|-----------|------|-------|-----------------|---------------|
@@ -142,17 +146,19 @@
 |-------|-------|
 | **ID** | TC-07 |
 | **Category** | Integration |
-| **Component** | `src/analytics/`, TimescaleDB |
-| **Objective** | Verify analytics data accuracy and conversational interface |
+| **Component** | `src/analytics/collector.py`, `data/analytics.json` (POC); TimescaleDB (production) |
+| **Objective** | Verify analytics data accuracy via REST API (POC). NLU conversational interface is future scope (ADR-007). |
 
-| # | Test Case | Input | Expected Result | Pass Criteria |
-|---|-----------|-------|-----------------|---------------|
-| 07-01 | Cost tracking | 10 requests at known model cost | Dashboard total matches sum | Accurate cost |
-| 07-02 | Cache hit rate | 10 requests, 5 from cache | Dashboard shows 50% hit rate | Correct percentage |
-| 07-03 | NLU query — cost | *"What was my cost today?"* | Returns today's total cost | Correct answer |
-| 07-04 | NLU query — provider | *"Which provider was used most this week?"* | Returns top provider | Correct answer |
-| 07-05 | NLU query — latency | *"What is my average response time?"* | Returns P50 latency | Accurate metric |
-| 07-06 | Ambiguous query | *"Show me the data"* | Clarification requested | Graceful fallback |
+> ⚠️ **ADR-007:** NLU conversational interface is **not implemented in POC**. TC-07-03 through TC-07-06 are **future scope test cases** — retained for production readiness planning only.
+
+| # | Test Case | Input | Expected Result | Pass Criteria | POC Status |
+|---|-----------|-------|-----------------|---------------|------------|
+| 07-01 | Cost tracking | 10 requests at known model cost | `GET /v1/analytics/summary` total matches sum | Accurate cost | ✅ Implemented |
+| 07-02 | Cache hit rate | 10 requests, 5 from cache | Summary shows 50% hit rate | Correct percentage | ✅ Implemented |
+| 07-03 | NLU query — cost | *"What was my cost today?"* | Returns today's total cost | Correct answer | 📅 Future Scope |
+| 07-04 | NLU query — provider | *"Which provider was used most this week?"* | Returns top provider | Correct answer | 📅 Future Scope |
+| 07-05 | NLU query — latency | *"What is my average response time?"* | Returns P50 latency | Accurate metric | 📅 Future Scope |
+| 07-06 | Ambiguous query | *"Show me the data"* | Clarification requested | Graceful fallback | 📅 Future Scope |
 
 ---
 

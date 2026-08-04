@@ -24,12 +24,14 @@
 │              ▼                       ▼                          │
 │  ┌───────────────────┐  ┌────────────────────────┐             │
 │  │  Semantic Cache   │  │  Request Queue &        │             │
-│  │  Redis + Qdrant   │  │  Rate Limiter (Redis)   │             │
+│  │  Pure-Python(POC) │  │  Rate Limiter           │             │
+│  │  Qdrant(Prod)     │  │  In-Memory(POC)         │             │
+│  │                   │  │  Redis(Prod)            │             │
 │  └───────────────────┘  └────────────────────────┘             │
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │             Analytics Engine (TimescaleDB)               │   │
-│  │         Dashboard · Cost Tracker · NLU Chat              │   │
+│  │   Analytics Engine (JSON/POC · TimescaleDB/Production)    │   │
+│  │         Dashboard · Cost Tracker · NLU Chat (Future)     │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -45,7 +47,7 @@
 | HTTP Server | FastAPI (Python 3.11) | Async request handling, OpenAI-compatible API surface |
 | Auth Middleware | JWT + API Key | Authenticate, identify user + tier |
 | NFR Middleware | Custom header parser | Extract X-NFR-Latency, X-NFR-Cost, X-NFR-Accuracy |
-| Rate Limit Middleware | Redis Token Bucket | Enforce per-tier request limits |
+| Rate Limit Middleware | In-Memory Token Bucket (POC) / Redis Token Bucket (Production) | Enforce per-tier request limits (ADR-002) |
 | Request Models | Pydantic v2 | Schema validation and serialization |
 
 ### 2.2 Routing Engine (`src/gateway/`)
@@ -61,10 +63,14 @@
 
 | Component | Technology | Responsibility |
 |-----------|-----------|----------------|
-| L1 Hot Cache | Redis (hash) | Exact prompt hash lookup, <5ms |
-| L2 Vector Cache | Qdrant | Cosine similarity search, threshold 0.95 |
-| Embedding Service | OpenAI Ada-002 | Generate 1536-dim vectors for prompts |
+| L1 Hot Cache | **POC:** In-memory dict / **Production:** Redis (hash) | Exact prompt hash lookup, <5ms |
+| L2 Vector Cache | **POC:** Pure-Python cosine similarity / **Production:** Qdrant | Cosine similarity search, threshold **0.75** (ADR-003) |
+| Embedding Service | **POC:** Python tokeniser (word overlap) / **Production:** OpenAI Ada-002 (1536-dim vectors) | Prompt vectorisation for similarity matching |
 | Cache Manager | Python | TTL enforcement (7 days), LRU eviction, invalidation |
+
+> ⚠️ **ADR-003 (POC):** Semantic cache implemented as pure-Python cosine similarity — no Qdrant or Ada-002 dependency. Enables zero-cost, zero-infrastructure demo execution. Production path: Qdrant L2 + Ada-002 embeddings for production-grade semantic fidelity.
+
+> ⚠️ **ADR-003:** Similarity threshold = **0.75**. Original design value of 0.95 was too strict — empirical testing produced 0% cache hits. Reduced to 0.75 after demo validation. Verified cache hit rate: **42.2%**.
 
 ### 2.4 Provider Layer (`src/providers/`)
 
@@ -78,21 +84,27 @@
 
 ### 2.5 Queue & Rate Limiter
 
-| Component | Technology | Responsibility |
-|-----------|-----------|----------------|
-| Priority Queue | Redis Sorted Set | Score = tier_priority × 1M + timestamp |
-| Rate Limiter | Redis INCR + TTL | Token bucket per user per 60s window |
-| Queue Worker | Python RQ | Dequeues and dispatches requests to routing engine |
-| Dead Letter Queue | Redis List | Stores permanently failed requests with metadata |
+> ⚠️ **ADR-002 — POC vs. Production:**
+> POC uses an **in-memory token bucket** with no Redis dependency, enabling zero-infrastructure demo execution.
+> Production target uses Redis INCR + TTL for distributed rate limiting across multiple gateway instances.
+
+| Component | POC Technology | Production Technology | Responsibility |
+|-----------|---------------|----------------------|----------------|
+| Rate Limiter | In-memory token bucket (Python dict) | Redis INCR + TTL | Token bucket per user per 60s window |
+| Priority Queue | In-memory heapq | Redis Sorted Set (score = tier_priority × 1M + timestamp) | Fair queuing by tier |
+| Queue Worker | Inline dispatch | Python RQ workers | Dequeues and dispatches to routing engine |
+| Dead Letter Queue | Not implemented (POC) | Redis List | Stores permanently failed requests |
 
 ### 2.6 Analytics Engine (`src/analytics/`)
 
 | Component | Technology | Responsibility |
 |-----------|-----------|----------------|
-| Metrics Collector | Python + TimescaleDB | Per-request: cost, latency, model, cache_hit, provider |
-| Dashboard API | FastAPI | Serves aggregated metrics to React frontend |
-| NLU Interface | Python + OpenAI | Classifies query intent → SQL → results |
-| Time-Series Store | TimescaleDB | Optimised query for time-range analytics |
+| Metrics Collector | Python + `data/analytics.json` **(POC)** / TimescaleDB **(Production)** | Per-request: cost, latency, model, cache_hit, provider |
+| Dashboard API | FastAPI `GET /v1/analytics/summary` | Serves aggregated metrics as JSON (POC); React frontend (Production) |
+| NLU Interface | Future Scope (ADR-007) | Classifies query intent → SQL → results |
+| Time-Series Store | `data/analytics.json` **(POC)** / TimescaleDB **(Production)** | Optimised time-range analytics |
+
+> ⚠️ **ADR-010 — POC vs. Production:** Analytics implemented as a JSON file store (`data/analytics.json`) for POC portability — no database dependency. Production target: TimescaleDB hypertable with the schema defined in Section 3.1 below.
 
 ---
 
@@ -122,7 +134,8 @@ CREATE TABLE users (
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Request log (TimescaleDB hypertable)
+-- Request log (TimescaleDB hypertable) — PRODUCTION TARGET (ADR-010)
+-- POC uses data/analytics.json; this schema is the production migration target
 CREATE TABLE requests (
     id          UUID,
     user_id     UUID REFERENCES users(id),
@@ -166,7 +179,7 @@ CREATE TABLE provider_health (
 
 | Key Pattern | Type | TTL | Purpose |
 |-------------|------|-----|---------|
-| `ratelimit:{user_id}:{window}` | String (INCR) | 60s | Token bucket counter |
+| `ratelimit:{user_id}:{window}` | String (INCR) | 60s | Token bucket counter *(Production only — ADR-002; POC uses in-memory dict)* |
 | `cache:hash:{prompt_hash}` | Hash | 24h | L1 hot cache |
 | `queue:{tier}` | Sorted Set | — | Priority request queue |
 | `cb:{provider}` | Hash | — | Circuit breaker state |
@@ -225,7 +238,9 @@ Client Request
 [6] Response — Enrich with metadata → return to client
     │
     ▼
-[7] Analytics — Async log to TimescaleDB
+[7] Analytics — Async log
+    - POC:        Append to data/analytics.json (ADR-010)
+    - Production: Insert into TimescaleDB hypertable
 ```
 
 ---
@@ -237,9 +252,9 @@ Client Request
 | API Framework | Python FastAPI | 0.110+ | Async, auto OpenAPI docs, AI ecosystem |
 | Queue | Redis + RQ | Redis 7 | Dual-use: cache L1 + queue |
 | Vector DB | Qdrant | 1.8+ | Open-source, Docker, Python SDK |
-| Relational DB | PostgreSQL | 15+ | JSONB, TimescaleDB extension |
-| Time-Series | TimescaleDB | 2.14+ | Reuses PostgreSQL engine |
-| Frontend | React 18 + MUI | React 18 | Rapid UI, widest ecosystem |
+| Relational DB | PostgreSQL | 15+ | JSONB, TimescaleDB extension *(Production — ADR-010)* |
+| Time-Series | **POC:** JSON file / **Production:** TimescaleDB | 2.14+ | POC: `data/analytics.json`; Production: reuses PostgreSQL engine |
+| Frontend | React 18 + MUI *(Production — Path B only)* | React 18 | Rapid UI, widest ecosystem. **Not implemented in POC** — analytics via REST API (ADR-007) |
 | Monitoring | Prometheus + Grafana | Latest | Open-source, Docker-friendly |
 | Containers | Docker Compose | V2 | Simple local orchestration |
 
@@ -275,7 +290,7 @@ Docker Compose (single host)
 ├── postgres      (PostgreSQL + TimescaleDB, port 5432)
 ├── redis         (Redis 7, port 6379)
 ├── qdrant        (Qdrant, port 6333)
-├── frontend      (React, port 3000)
+├── frontend      (React, port 3000) ── ⚠️ Production Path B only (not in POC)
 ├── prometheus    (port 9090)
 └── grafana       (port 3001)
 ```
@@ -305,7 +320,7 @@ sequenceDiagram
     participant P  as Provider (selected)
     participant AN as Analytics
 
-    C->>A: POST /api/v1/route<br/>{messages, nfr:{latency:low, cost:low, accuracy:standard}}
+    C->>A: POST /api/v1/route (POC) / POST /v1/chat/completions (Production)<br/>{messages, nfr:{latency:low, cost:low, accuracy:standard}}
     A->>A: Auth middleware — validate API key → tier=pro
     A->>A: NFR parser — parse + validate X-NFR-* headers
     A->>G: route(messages, nfr, tier)
@@ -326,6 +341,8 @@ sequenceDiagram
     G->>AN: record(model, provider, cost, cache_hit=false, ...)
     G-->>A: {id, model, provider, content, metadata}
     A-->>C: 200 OK — RouteResponse{cache_hit:false, selected_reason:nfr_match}
+
+    Note over C,A: POC endpoint: POST /api/v1/route<br/>Production target: POST /v1/chat/completions (ADR-004, OpenAI-compatible)
 ```
 
 ---
@@ -344,7 +361,7 @@ sequenceDiagram
     Note over C,SC: First request — cache MISS (already stored by UC-01)
     Note over C,SC: Second request — paraphrased prompt
 
-    C->>A: POST /api/v1/route<br/>{messages:[{role:user, content:"Which city is France's capital?"}]}
+    C->>A: POST /api/v1/route (POC) / POST /v1/chat/completions (Production)<br/>{messages:[{role:user, content:"Which city is France's capital?"}]}
     A->>A: Auth + NFR parse
     A->>G: route(messages, nfr, tier)
 
