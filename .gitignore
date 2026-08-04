@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Environment (never commit real keys)
+.env
+
+# Runtime data files
+data/cache.json
+data/analytics.json
+data/provider_health.json
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
