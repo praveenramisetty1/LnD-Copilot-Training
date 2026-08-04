@@ -1,0 +1,4 @@
+# Evidence files are generated here by the CI pipeline and test runs.
+# pytest --cov report  → docs/evidence/coverage/
+# Load test results    → docs/evidence/load-test-results.png
+# Screenshots          → docs/evidence/screenshots/

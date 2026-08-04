@@ -1,0 +1,256 @@
+{
+  "rootFolder": "c:\\Archive\\Propeller_Architect_Roles",
+  "analyzedAt": "2026-02-04T03:26:30.983Z",
+  "rootStructure": [
+    {
+      "name": "AI Powered IT Ops - Problem-Statement-2.txt",
+      "type": "file",
+      "size": 0,
+      "lines": 1
+    },
+    {
+      "name": "AI_Ops_Architecture_Review_Process.md",
+      "type": "file",
+      "size": 19965,
+      "lines": 608
+    },
+    {
+      "name": "AI_Ops_Judge_Evaluation_Sheet.csv",
+      "type": "file",
+      "size": 11004,
+      "lines": 133
+    },
+    {
+      "name": "AI_Powered_IT_Ops_Implementation_Guide.md",
+      "type": "file",
+      "size": 28433,
+      "lines": 1002
+    },
+    {
+      "name": "Architecture_Judge_Evaluation_Sheet.csv",
+      "type": "file",
+      "size": 7193,
+      "lines": 86
+    },
+    {
+      "name": "Architecture_Review_Process_Post_Implementation.md",
+      "type": "file",
+      "size": 15656,
+      "lines": 509
+    },
+    {
+      "name": "Architect_Effectiveness_Measurement.md",
+      "type": "file",
+      "size": 9426,
+      "lines": 320
+    },
+    {
+      "name": "overview.json",
+      "type": "file",
+      "size": 7895,
+      "lines": 256
+    },
+    {
+      "name": "Production Down Time Impact & Root- Cause Traceability System - Problem-Statement-1.txt",
+      "type": "file",
+      "size": 63,
+      "lines": 2
+    },
+    {
+      "name": "Production_Downtime_System_Implementation_Guide.md",
+      "type": "file",
+      "size": 18255,
+      "lines": 668
+    },
+    {
+      "name": "Software_Architect_Capabilities_Roles_V_1.0.txt",
+      "type": "file",
+      "size": 1037,
+      "lines": 30
+    },
+    {
+      "name": "Software_Architect_Diagram.md",
+      "type": "file",
+      "size": 4121,
+      "lines": 159
+    }
+  ],
+  "rootFileSnippets": {
+    "AI Powered IT Ops - Problem-Statement-2.txt": [
+      ""
+    ],
+    "AI_Ops_Architecture_Review_Process.md": [
+      "# Architecture Review Process - Post Implementation",
+      "## AI Powered IT Operations (AIOps) Platform",
+      "",
+      "### Document Version: 1.0",
+      "### Review Date: January 22, 2026",
+      "",
+      "---",
+      "",
+      "## 1. REVIEW OVERVIEW",
+      ""
+    ],
+    "AI_Ops_Judge_Evaluation_Sheet.csv": [
+      "Section,Category,Criterion,Weight %,Score (1-5),Evidence/Comments,Judge Name,Date",
+      "AI/ML MODEL PERFORMANCE,Anomaly Detection,Precision (target >85%),4,,,,",
+      "AI/ML MODEL PERFORMANCE,Anomaly Detection,Recall (target >80%),3,,,,",
+      "AI/ML MODEL PERFORMANCE,Anomaly Detection,False positive rate (target <10%),3,,,,",
+      "AI/ML MODEL PERFORMANCE,Anomaly Detection,Real-time inference capability,2,,,,",
+      "AI/ML MODEL PERFORMANCE,Predictive Analytics,Failure prediction accuracy (target >85%),4,,,,",
+      "AI/ML MODEL PERFORMANCE,Predictive Analytics,Prediction lead time (target 24-48 hours),3,,,,",
+      "AI/ML MODEL PERFORMANCE,Predictive Analytics,Useful prediction rate (target >70%),3,,,,",
+      "AI/ML MODEL PERFORMANCE,Predictive Analytics,Capacity forecasting accuracy (target >95%),2,,,,",
+      "AI/ML MODEL PERFORMANCE,Event Correlation,Correlation accuracy (target >85%),3,,,,"
+    ],
+    "AI_Powered_IT_Ops_Implementation_Guide.md": [
+      "# AI Powered IT Operations (AIOps)",
+      "## Detailed Implementation Guideline",
+      "",
+      "### Document Version: 1.0",
+      "### Date: January 22, 2026",
+      "",
+      "---",
+      "",
+      "## 1. EXECUTIVE SUMMARY",
+      ""
+    ],
+    "Architecture_Judge_Evaluation_Sheet.csv": [
+      "Section,Category,Criterion,Weight %,Score (1-5),Evidence/Comments,Judge Name,Date",
+      "TECHNICAL ARCHITECTURE,System Design,Architecture patterns appropriately applied,3,,,,",
+      "TECHNICAL ARCHITECTURE,System Design,Component modularity and separation of concerns,3,,,,",
+      "TECHNICAL ARCHITECTURE,System Design,Scalability design (horizontal/vertical),3,,,,",
+      "TECHNICAL ARCHITECTURE,System Design,High availability and fault tolerance design,3,,,,",
+      "TECHNICAL ARCHITECTURE,System Design,Data architecture and flow optimization,2,,,,",
+      "TECHNICAL ARCHITECTURE,System Design,API design and interface definitions,2,,,,",
+      "TECHNICAL ARCHITECTURE,Technology Decisions,Technology stack appropriateness,3,,,,",
+      "TECHNICAL ARCHITECTURE,Technology Decisions,Justification for technology choices,2,,,,",
+      "TECHNICAL ARCHITECTURE,Technology Decisions,Alignment with organizational standards,2,,,,"
+    ],
+    "Architecture_Review_Process_Post_Implementation.md": [
+      "# Architecture Review Process - Post Implementation",
+      "## Production Downtime Impact & Root-Cause Traceability System",
+      "",
+      "### Document Version: 1.0",
+      "### Review Date: January 22, 2026",
+      "",
+      "---",
+      "",
+      "## 1. REVIEW OVERVIEW",
+      ""
+    ],
+    "Architect_Effectiveness_Measurement.md": [
+      "# Measuring Software Architect Effectiveness",
+      "",
+      "## Capability & Role Effectiveness Framework",
+      "",
+      "```mermaid",
+      "graph TB",
+      "subgraph \"Measurement Framework\"",
+      "ARCH[Software Architect Effectiveness]",
+      "end",
+      ""
+    ],
+    "overview.json": [
+      "{",
+      "\"rootFolder\": \"c:\\\\Archive\\\\Propeller_Architect_Roles\",",
+      "\"analyzedAt\": \"2026-01-27T11:40:33.863Z\",",
+      "\"rootStructure\": [",
+      "{",
+      "\"name\": \"AI Powered IT Ops - Problem-Statement-2.txt\",",
+      "\"type\": \"file\",",
+      "\"size\": 0,",
+      "\"lines\": 1",
+      "},"
+    ],
+    "Production Down Time Impact & Root- Cause Traceability System - Problem-Statement-1.txt": [
+      "Production Down Time Impact & Root- Cause Traceability System",
+      ""
+    ],
+    "Production_Downtime_System_Implementation_Guide.md": [
+      "# Production Down Time Impact & Root-Cause Traceability System",
+      "## Detailed Implementation Guideline",
+      "",
+      "### Document Version: 1.0",
+      "### Date: January 22, 2026",
+      "",
+      "---",
+      "",
+      "## 1. EXECUTIVE SUMMARY",
+      ""
+    ],
+    "Software_Architect_Capabilities_Roles_V_1.0.txt": [
+      "SOFTWARE ARCHITECT CAPABILITIES AND ROLES",
+      "",
+      "KEY CAPABILITIES:",
+      "- System design and architectural pattern knowledge",
+      "- Technology evaluation and selection",
+      "- Code review and quality assurance",
+      "- Performance optimization and scalability planning",
+      "- Security architecture and risk assessment",
+      "- Cloud and infrastructure design",
+      "- API and integration design"
+    ],
+    "Software_Architect_Diagram.md": [
+      "# Software Architect Capabilities and Roles",
+      "",
+      "```mermaid",
+      "mindmap",
+      "root((Software<br/>Architect))",
+      "**Key Capabilities**",
+      "System Design",
+      "Architectural Patterns",
+      "Design Principles",
+      "Scalability Planning"
+    ]
+  },
+  "importantFolders": [],
+  "readmeParagraphs": {},
+  "totals": {
+    "numFiles": 12,
+    "numDirs": 0,
+    "totalSizeBytes": 123048,
+    "totalLinesOfCode": 0
+  },
+  "fileCategories": {
+    "documentation": 9,
+    "other": 2,
+    "config": 1
+  },
+  "linesOfCodePerLanguage": {},
+  "filesPerLanguage": {},
+  "projectTypes": [],
+  "frameworks": [],
+  "entryPoints": [],
+  "ciCdTools": [],
+  "packageManagers": [],
+  "topLevelDirectories": [],
+  "detailedDirectories": [],
+  "architecturalInsights": {
+    "coreApplications": [],
+    "entryPointDetails": [],
+    "serviceArchitecture": {
+      "microservices": [],
+      "monoliths": [],
+      "libraries": []
+    },
+    "layeredArchitecture": {
+      "presentation": [],
+      "business": [],
+      "data": [],
+      "infrastructure": []
+    }
+  },
+  "largeFiles": [],
+  "dependencies": {
+    "production": [],
+    "development": [],
+    "total": 0
+  },
+  "complexity": {
+    "averageFileSize": 0,
+    "maxFileSize": 0,
+    "nestedDepth": 0,
+    "estimatedComplexity": "low"
+  }
+}

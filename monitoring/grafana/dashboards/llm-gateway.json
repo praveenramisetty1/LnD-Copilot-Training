@@ -1,0 +1,111 @@
+{
+  "__inputs": [],
+  "__requires": [{ "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" }],
+  "title": "LLM Gateway — Overview",
+  "uid": "llm-gateway-poc",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Total Requests",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [{ "expr": "llm_gateway_total_requests", "legendFormat": "Requests" }],
+      "options": { "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" },
+        "thresholds": { "steps": [{ "color": "blue", "value": null }] } } }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Cache Hit Rate",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [{ "expr": "llm_gateway_cache_hit_rate * 100", "legendFormat": "Hit %" }],
+      "options": { "colorMode": "background" },
+      "fieldConfig": { "defaults": { "unit": "percent",
+        "thresholds": { "steps": [
+          { "color": "red", "value": null },
+          { "color": "yellow", "value": 30 },
+          { "color": "green", "value": 50 }
+        ] } } }
+    },
+    {
+      "id": 3, "type": "stat", "title": "P95 Latency (ms)",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [{ "expr": "llm_gateway_p95_latency_ms", "legendFormat": "P95 ms" }],
+      "fieldConfig": { "defaults": { "unit": "ms",
+        "thresholds": { "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 500 },
+          { "color": "red", "value": 2000 }
+        ] } } }
+    },
+    {
+      "id": 4, "type": "stat", "title": "Total Cost Today ($)",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [{ "expr": "llm_gateway_total_cost", "legendFormat": "Cost $" }],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD",
+        "thresholds": { "steps": [{ "color": "blue", "value": null }] } } }
+    },
+    {
+      "id": 5, "type": "stat", "title": "Error Rate",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "targets": [{ "expr": "llm_gateway_error_rate * 100", "legendFormat": "Error %" }],
+      "fieldConfig": { "defaults": { "unit": "percent",
+        "thresholds": { "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 1 },
+          { "color": "red", "value": 5 }
+        ] } } }
+    },
+    {
+      "id": 6, "type": "stat", "title": "Active Providers",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "targets": [{ "expr": "llm_gateway_active_providers", "legendFormat": "Providers" }],
+      "fieldConfig": { "defaults": {
+        "thresholds": { "steps": [
+          { "color": "red", "value": null },
+          { "color": "yellow", "value": 1 },
+          { "color": "green", "value": 3 }
+        ] } } }
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Request Rate (req/s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [{ "expr": "rate(llm_gateway_total_requests[1m])", "legendFormat": "RPS" }],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } }
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Latency Percentiles (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "llm_gateway_avg_latency_ms", "legendFormat": "P50" },
+        { "expr": "llm_gateway_p95_latency_ms", "legendFormat": "P95" }
+      ]
+    },
+    {
+      "id": 9, "type": "piechart", "title": "Provider Distribution",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "llm_gateway_requests_by_provider{provider='openai'}", "legendFormat": "OpenAI" },
+        { "expr": "llm_gateway_requests_by_provider{provider='anthropic'}", "legendFormat": "Anthropic" },
+        { "expr": "llm_gateway_requests_by_provider{provider='google'}", "legendFormat": "Google" }
+      ]
+    },
+    {
+      "id": 10, "type": "piechart", "title": "Tier Distribution",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "targets": [
+        { "expr": "llm_gateway_requests_by_tier{tier='free'}", "legendFormat": "Free" },
+        { "expr": "llm_gateway_requests_by_tier{tier='basic'}", "legendFormat": "Basic" },
+        { "expr": "llm_gateway_requests_by_tier{tier='pro'}", "legendFormat": "Pro" },
+        { "expr": "llm_gateway_requests_by_tier{tier='enterprise'}", "legendFormat": "Enterprise" }
+      ]
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Cost Over Time ($)",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "targets": [{ "expr": "llm_gateway_total_cost", "legendFormat": "Cumulative Cost $" }],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Goal: Architect an LLM GatewayI.
+
+Details:
+•	API should support NFR based model auto-selection (Read custom header params and auto-select appropriate model from list available in backend)
+•	On model call failure do intelligent routing - same model via diff provider OR same model on diff region OR different model from same family etc
+•	Semantic Caching to reduce costs
+•	Queueing up requests to avoid 429 errors
+•	Ability to throttle requests from users in lower / less-privileged tiers
+•	Frontend for configuring above routing logic
+•	Analytics dashboard for showing various reports
+•	Chat interface for querying analytics data

@@ -1,0 +1,2 @@
+# This file keeps the data/ directory in git.
+# cache.json, analytics.json, and provider_health.json are written here at runtime.
