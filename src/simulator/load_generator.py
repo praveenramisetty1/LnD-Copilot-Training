@@ -10,8 +10,9 @@ Usage:
 import argparse
 import random
 import time
-import httpx
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import httpx
 
 GATEWAY_URL = "http://localhost:8000"
 
