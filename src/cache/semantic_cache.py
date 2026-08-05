@@ -37,7 +37,10 @@ STOP_WORDS = {
 
 def _tokenize(text: str) -> List[str]:
     tokens = re.findall(r"\b[a-z0-9]+\b", text.lower())
-    return [t for t in tokens if t not in STOP_WORDS and len(t) > 1]
+    # Allow single-digit numeric tokens (e.g. "2" in "2 + 2") through the
+    # length guard.  Single non-digit characters are still discarded because
+    # they carry no semantic weight and are not in STOP_WORDS.
+    return [t for t in tokens if t not in STOP_WORDS and (len(t) > 1 or t.isdigit())]
 
 
 def _term_freq(tokens: List[str]) -> Dict[str, float]:
