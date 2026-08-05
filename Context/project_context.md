@@ -1,7 +1,7 @@
 # Propeller Technothon — Project Context
 > Generated from: `/ProblemStatement` and `/ProblemStatement/Problem_Statement_4_LLM_Gateway`
-> Last Updated: Documentation gap analysis complete — all 7 conflicts, 9 doc gaps, 5 impl gaps, 4 TODO stubs resolved
-> Branch: `Documentation-Updates` — PR raised to `main` (35 files changed, +2,776/-147 lines)
+> Last Updated: All CI errors resolved — 4 bugs fixed across 4 commits on branch `ivan_fix_ruff_linting`
+> Branch: `ivan_fix_ruff_linting` — CI pipeline fully green (lint ✅ · tests ✅ · coverage ✅ · bandit ✅)
 > Demo Status: 8/8 scenarios PASS | Score Projection: 4.52/5.0 (Excellent)
 
 ---
@@ -384,7 +384,7 @@ Each of the 10 roles below will be qualitatively rated 1–5 by judges:
 | Failover Time | <500ms | Instant (in-process) |
 | Throughput | >10,000 RPS | POC scope — not load tested |
 | NLU Query Accuracy | >90% | Not implemented (future scope) |
-| Test Coverage | >80% | 66 tests (unit + integration) |
+| Test Coverage | >80% | 82 tests (unit + integration) · **76.60% coverage** · threshold 70% ✅ |
 | Security Vulnerabilities (critical) | 0 | 0 confirmed |
 
 ---
@@ -456,7 +456,7 @@ Each of the 10 roles below will be qualitatively rated 1–5 by judges:
 | `src/gateway/model_selector.py` | Weighted scoring: Cost 40%, Latency 30%, Accuracy 30% |
 | `src/gateway/failover.py` | 4-level failover + CLOSED/OPEN/HALF_OPEN circuit breaker |
 | `src/gateway/router.py` | Main orchestrator: cache → select → dispatch → analytics |
-| `src/cache/semantic_cache.py` | Pure-Python cosine similarity cache (threshold 0.75) |
+| `src/cache/semantic_cache.py` | Pure-Python cosine similarity cache (threshold 0.75) — `_tokenize()` fixed: single-digit numeric tokens now pass length guard (`t.isdigit()`) |
 | `src/analytics/collector.py` | Per-request analytics → data/analytics.json |
 | `src/providers/openai_simulator.py` | OpenAI GPT-4/GPT-3.5 simulator (configurable failure rate) |
 | `src/providers/anthropic_simulator.py` | Anthropic Claude-3 simulator |
@@ -472,7 +472,8 @@ Each of the 10 roles below will be qualitatively rated 1–5 by judges:
 | `tests/unit/test_model_selector.py` | 16 unit tests (TC-02) |
 | `tests/unit/test_failover.py` | 17 unit tests (TC-04) |
 | `tests/unit/test_semantic_cache.py` | 15 unit tests (TC-03) |
-| `tests/integration/test_route_endpoint.py` | 15 integration tests |
+| `tests/integration/test_route_endpoint.py` | 14 integration tests — 14/14 PASS (all CI-green) |
+| `src/simulator/load_generator.py` | Synthetic load generator — `urllib.request` replaced with `httpx` (bandit B310 fix, commit `f763eb1`) |
 | `tests/load/locustfile.py` | Locust load test (3 scenarios) |
 | `.github/workflows/ci.yml` | CI: lint + test + coverage + bandit |
 
@@ -500,7 +501,10 @@ Each of the 10 roles below will be qualitatively rated 1–5 by judges:
 | Emoji crash (`cp1252`) | Removed from all `*.py` source files | ADR-005 |
 | IDE terminal kills server | Use dedicated PowerShell window or `start_server.bat` | — |
 | `httpx` deprecation | `httpx2` added to dependencies | — |
+| `pytest-cov` missing | Added `pytest-cov>=5.0.0` to `requirements.txt` — required by CI coverage step | — |
 | Cache threshold 0.95 too strict | Lowered to **0.75** in `.env` (0.95 = 0% hit rate) | ADR-003 |
+| Cache always miss on numeric prompts | `_tokenize()` `len(t) > 1` guard dropped single-digit numbers (e.g. "2"); fixed with `or t.isdigit()` | — |
+| ruff I001 — unsorted imports | `import httpx` placed in stdlib block; moved to third-party block (blank line after stdlib) | — |
 | Redis not available | POC uses in-memory token bucket — no Redis needed | ADR-002 |
 | TimescaleDB not available | POC uses `data/analytics.json` — no DB needed | ADR-010 |
 
@@ -582,11 +586,14 @@ Each of the 10 roles below will be qualitatively rated 1–5 by judges:
 | Item | Detail |
 |------|--------|
 | Repository | `https://github.com/LnD-Copilot-Training/Propeller_29_2.git` |
-| Active Branch | `Documentation-Updates` |
+| Active Branch | `ivan_fix_ruff_linting` |
+| Commit | `97c1ff1` — *fix: sort imports in load_generator.py to resolve ruff I001* |
+| Commit | `f763eb1` — *fix: replace urllib.request with httpx in load_generator to resolve bandit B310* |
+| Commit | `99f979b` — *fix: add pytest-cov to requirements.txt to resolve CI coverage step failure* |
+| Commit | `d74b701` — *fix: allow single-digit numeric tokens in tokenizer to restore cache-hit on identical requests* |
 | Commit | `4750a37` — *docs: resolve all documentation gaps and conflicts from gap analysis* |
 | PR Status | `Documentation-Updates` → `main` — ✅ Pull Request raised |
-| Files Changed | 35 files (14 modified, 21 new) |
-| Lines | +2,776 insertions / -147 deletions |
+| CI Status | ✅ Fully green — ruff ✅ · pytest 82/82 ✅ · coverage 76.60% ✅ · bandit 0 issues ✅ |
 | Working Tree | Clean — nothing to commit |
 
 ---
@@ -595,3 +602,16 @@ Each of the 10 roles below will be qualitatively rated 1–5 by judges:
 *All activities, decisions, and implementations should align with the targets and criteria defined here.*
 *Last demo run: 8/8 scenarios PASS. Score projection: 4.52/5.0 (Excellent) — revised after Analytics category score target adjusted 4.5→3.5 (NLU = Future Scope, ADR-007).*
 *Documentation fully aligned with implementation as of this session. All gaps resolved. PR raised to main.*
+
+---
+
+## 19. CI BUG-FIX LOG
+
+> Tracks post-documentation bugs found and resolved in CI. Branch: `ivan_fix_ruff_linting`
+
+| Commit | Fix | Root Cause | Verified |
+|--------|-----|------------|----------|
+| `d74b701` | `src/cache/semantic_cache.py` — `_tokenize()` length guard | `len(t) > 1` silently dropped single-digit numeric tokens (e.g. `"2"`), producing an empty token list for prompts like `"What is 2 + 2?"`. `store()` exited early; cache was never written; second identical request always returned `cache_hit: False` | 14/14 integration tests PASS |
+| `99f979b` | `requirements.txt` — added `pytest-cov>=5.0.0` | `pytest-cov` was never listed in `requirements.txt`; CI `Install dependencies` step never installed it; all `--cov-*` flags in the Coverage report step were unrecognised (exit code 4) | 82/82 tests PASS · coverage 76.60% · threshold 70% ✅ |
+| `f763eb1` | `src/simulator/load_generator.py` — replaced `urllib.request.urlopen` with `httpx` | `urllib.request.urlopen` flagged as B310 (Medium severity, CWE-22) by bandit; CI runs `bandit -r src/ -ll -q` (Medium+), causing exit code 1; `httpx` is already in `requirements.txt` and is not blacklisted | `bandit -r src/ -ll -q` → 0 issues, exit code 0 ✅ |
+| `97c1ff1` | `src/simulator/load_generator.py` — sorted imports to resolve ruff I001 | Previous commit placed `import httpx` inline with stdlib imports; ruff I001 requires third-party packages in a separate block after stdlib, separated by a blank line; ruff check exited with code 1 | `ruff check src/simulator/load_generator.py` → All checks passed ✅ |
