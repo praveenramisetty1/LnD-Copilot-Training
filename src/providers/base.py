@@ -2,8 +2,8 @@
 """Abstract base class for all LLM provider simulators."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 
 @dataclass

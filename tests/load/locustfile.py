@@ -13,8 +13,7 @@ Scenarios:
   FailoverUser — trips circuit breaker then recovers
 """
 
-from locust import HttpUser, task, between
-
+from locust import HttpUser, between, task
 
 HEADERS_FREE        = {"Authorization": "Bearer free-key-001"}
 HEADERS_PRO         = {"Authorization": "Bearer pro-key-001"}

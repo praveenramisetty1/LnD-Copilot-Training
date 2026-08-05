@@ -4,9 +4,8 @@ Provider failure simulator — used for demo and integration tests.
 Allows scripted failure/recovery scenarios without touching real providers.
 """
 
-import os
-import time
-from typing import Dict, Optional
+from typing import Dict
+
 from src.gateway.failover import FailoverManager
 from src.providers.registry import build_providers
 

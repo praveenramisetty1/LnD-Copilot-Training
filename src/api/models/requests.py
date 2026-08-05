@@ -1,8 +1,9 @@
 # src/api/models/requests.py
 """Pydantic request models for the LLM Gateway POC."""
 
-from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class Message(BaseModel):

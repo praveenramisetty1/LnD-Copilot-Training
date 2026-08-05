@@ -5,12 +5,12 @@ No external database required; everything lives in memory at startup.
 """
 
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List
 
+from .anthropic_simulator import ANTHROPIC_MODELS, AnthropicSimulator
 from .base import BaseProvider
-from .openai_simulator import OpenAISimulator, OPENAI_MODELS
-from .anthropic_simulator import AnthropicSimulator, ANTHROPIC_MODELS
-from .google_simulator import GoogleSimulator, GOOGLE_MODELS
+from .google_simulator import GOOGLE_MODELS, GoogleSimulator
+from .openai_simulator import OPENAI_MODELS, OpenAISimulator
 
 # ── Model Catalog ────────────────────────────────────────────────────────────
 # Each entry: model_name → {provider, family, cost_per_1k, avg_latency_ms,

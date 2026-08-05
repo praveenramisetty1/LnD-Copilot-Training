@@ -1,12 +1,11 @@
 # src/providers/google_simulator.py
 """Simulates Google provider — Gemini-Pro, Gemini-Flash."""
 
-import time
 import random
-from typing import List, Dict
+import time
+from typing import Dict, List
 
 from .base import BaseProvider, ProviderConfig, ProviderResponse
-
 
 GOOGLE_MODELS = {
     "gemini-pro": {

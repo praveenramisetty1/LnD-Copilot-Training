@@ -10,10 +10,9 @@ Usage:
 import argparse
 import random
 import time
-import urllib.request
-import urllib.error
-import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import httpx
 
 GATEWAY_URL = "http://localhost:8000"
 
@@ -53,35 +52,29 @@ NFR_COMBOS = [
 
 def _send_request(prompt: str, nfr: dict, tier: str) -> dict:
     api_key = API_KEYS.get(tier, "free-key-001")
-    payload = json.dumps({
-        "messages": [{"role": "user", "content": prompt}],
-        "nfr": nfr,
-    }).encode()
-
-    req = urllib.request.Request(
-        f"{GATEWAY_URL}/api/v1/route",
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type":  "application/json",
-        },
-        method="POST",
-    )
     start = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            body      = json.loads(resp.read())
-            elapsed   = int((time.time() - start) * 1000)
-            return {
-                "status":    200,
-                "model":     body.get("model"),
-                "provider":  body.get("provider"),
-                "cache_hit": body.get("metadata", {}).get("cache_hit", False),
-                "cost":      body.get("metadata", {}).get("cost", 0),
-                "latency_ms":elapsed,
-            }
-    except urllib.error.HTTPError as e:
-        return {"status": e.code, "error": str(e)}
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(
+                f"{GATEWAY_URL}/api/v1/route",
+                json={
+                    "messages": [{"role": "user", "content": prompt}],
+                    "nfr": nfr,
+                },
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+            body    = resp.json()
+            elapsed = int((time.time() - start) * 1000)
+            if resp.status_code == 200:
+                return {
+                    "status":     200,
+                    "model":      body.get("model"),
+                    "provider":   body.get("provider"),
+                    "cache_hit":  body.get("metadata", {}).get("cache_hit", False),
+                    "cost":       body.get("metadata", {}).get("cost", 0),
+                    "latency_ms": elapsed,
+                }
+            return {"status": resp.status_code, "error": body}
     except Exception as e:
         return {"status": 0, "error": str(e)}
 

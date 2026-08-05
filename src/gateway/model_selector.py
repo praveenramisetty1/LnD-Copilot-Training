@@ -7,8 +7,9 @@ No external dependencies.
 
 from typing import Dict, List, Optional, Tuple
 
-from .nfr_parser import NFRRequirements
 from src.providers.registry import MODEL_CATALOG
+
+from .nfr_parser import NFRRequirements
 
 # How each NFR value multiplies the base weight for that dimension
 # "low latency needed" → latency matters MORE → higher multiplier

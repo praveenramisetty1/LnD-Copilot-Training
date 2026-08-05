@@ -8,11 +8,11 @@ import time
 import uuid
 from typing import Dict, List, Optional
 
-from src.gateway.nfr_parser import NFRRequirements
-from src.gateway.model_selector import select_model
-from src.gateway.failover import FailoverManager
-from src.cache.semantic_cache import SemanticCache
 from src.analytics.collector import AnalyticsCollector
+from src.cache.semantic_cache import SemanticCache
+from src.gateway.failover import FailoverManager
+from src.gateway.model_selector import select_model
+from src.gateway.nfr_parser import NFRRequirements
 from src.providers.registry import build_providers
 
 

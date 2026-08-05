@@ -37,7 +37,10 @@ STOP_WORDS = {
 
 def _tokenize(text: str) -> List[str]:
     tokens = re.findall(r"\b[a-z0-9]+\b", text.lower())
-    return [t for t in tokens if t not in STOP_WORDS and len(t) > 1]
+    # Allow single-digit numeric tokens (e.g. "2" in "2 + 2") through the
+    # length guard.  Single non-digit characters are still discarded because
+    # they carry no semantic weight and are not in STOP_WORDS.
+    return [t for t in tokens if t not in STOP_WORDS and (len(t) > 1 or t.isdigit())]
 
 
 def _term_freq(tokens: List[str]) -> Dict[str, float]:
@@ -84,8 +87,17 @@ class SemanticCache:
         """
         Return the cached entry if a semantically similar prompt exists,
         otherwise return None.
+        Reloads from disk when the in-memory list is empty so that entries
+        written by a previous request (in a re-initialised instance) are
+        still found.
         """
         self._evict_expired()
+        if not self._entries:
+            # Fallback: another GatewayRouter instance may have written to
+            # disk (e.g. pytest re-initialises the lifespan per test-function
+            # event-loop).  Reload so we don't lose a just-stored entry.
+            self._load()
+            self._evict_expired()
         if not self._entries or not prompt.strip():
             return None
 

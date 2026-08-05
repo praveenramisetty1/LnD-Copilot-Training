@@ -6,9 +6,17 @@ Uses FastAPI TestClient — no running server needed.
 
 import pytest
 from fastapi.testclient import TestClient
+
 from src.api.main import app
 
 client = TestClient(app, raise_server_exceptions=False)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _app_lifespan():
+    """Start the FastAPI lifespan (initialises GatewayRouter) for all tests."""
+    with client:
+        yield
 
 FREE_KEY        = "free-key-001"
 PRO_KEY         = "pro-key-001"

@@ -2,11 +2,10 @@
 """Unit tests for circuit breaker + multi-level failover — TC-04"""
 
 import time
-import pytest
 from unittest.mock import MagicMock
+
 from src.gateway.failover import CircuitBreaker, FailoverManager
 from src.providers.base import ProviderResponse
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
