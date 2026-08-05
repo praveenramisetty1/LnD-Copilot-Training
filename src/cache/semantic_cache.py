@@ -84,8 +84,17 @@ class SemanticCache:
         """
         Return the cached entry if a semantically similar prompt exists,
         otherwise return None.
+        Reloads from disk when the in-memory list is empty so that entries
+        written by a previous request (in a re-initialised instance) are
+        still found.
         """
         self._evict_expired()
+        if not self._entries:
+            # Fallback: another GatewayRouter instance may have written to
+            # disk (e.g. pytest re-initialises the lifespan per test-function
+            # event-loop).  Reload so we don't lose a just-stored entry.
+            self._load()
+            self._evict_expired()
         if not self._entries or not prompt.strip():
             return None
 
